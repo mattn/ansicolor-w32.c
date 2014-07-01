@@ -1,0 +1,22 @@
+{
+  "name": "ansicolor-w32",
+  "version": "0.0.1",
+  "description": "ANSI color support on windows",
+  "repo": "mattn/ansicolor-w32.c",
+  "src": ["ansicolor-w32.h", "ansicolor-w32.c"],
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mattn/ansicolor-w32.c.git"
+  },
+  "keywords": [
+    "ansicolor-w32", "ansi", "color", "windows", "w32", "win32"
+  ],
+  "author": "Yasuhiro Matsumoto",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mattn/ansicolor-w32.c/issues"
+  }
+}
