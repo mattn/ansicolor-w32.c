@@ -19,3 +19,4 @@ main(int argc, char* argv[]) {
 }
 ```
 
+The library replaces the printf family functions with wrappers that recognize the ANSI escape code and render the input using the specified colors.
