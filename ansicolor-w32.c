@@ -1,3 +1,4 @@
+#ifdef _WIN32
 #include <windows.h>
 #include <stdio.h>
 
@@ -322,3 +323,4 @@ _fputs_w32(FILE* fp, const char* s) {
   r += __write_w32(fp, "\n");
   return r;
 }
+#endif
