@@ -2,3 +2,20 @@ ansicolor-w32.c
 ===============
 
 ANSI color support on windows
+
+
+You can display ANSI color on windows without hacks
+
+```c
+#include <stdio.h>
+#ifdef _WIN32
+# include "ansicolor-w32.h"
+#endif
+
+int
+main(int argc, char* argv[]) {
+  printf("\x1b[2J\x1b[1,1H\x1b[40mhello"); 
+  return 0;
+}
+```
+
