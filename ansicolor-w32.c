@@ -11,8 +11,10 @@
 
 int
 __write_w32(FILE* fp, const char* buf) {
-  static WORD attr_old;
-  static HANDLE stdo = INVALID_HANDLE_VALUE;
+  static WORD attr_olds[2] = {-1, -1}, attr_old;
+  static int first = 1;
+  int type;
+  HANDLE handle = INVALID_HANDLE_VALUE;
   WORD attr;
   DWORD written, csize;
   CONSOLE_CURSOR_INFO cci;
@@ -20,12 +22,22 @@ __write_w32(FILE* fp, const char* buf) {
   COORD coord;
   const char *ptr = buf;
 
-  stdo = (HANDLE) _get_osfhandle(fileno(fp));
-  if (stdo == INVALID_HANDLE_VALUE) {
-    return fwrite(buf, sizeof(buf), 1, fp);
+  if (fp == stdout) {
+    type = 0;
+  } else if (fp == stderr) {
+    type = 1;
+  } else {
+    type = 0;
   }
-  GetConsoleScreenBufferInfo(stdo, &csbi);
-  attr = attr_old = csbi.wAttributes;
+
+  handle = (HANDLE) _get_osfhandle(fileno(fp));
+  GetConsoleScreenBufferInfo(handle, &csbi);
+  attr = csbi.wAttributes;
+
+  if (attr_olds[type] == (WORD) -1) {
+    attr_olds[type] = attr;
+  }
+  attr_old = attr;
 
   while (*ptr) {
     if (*ptr == '\033') {
@@ -58,46 +70,46 @@ retry:
             for (i = 0; i <= n; i++) {
               switch (v[i]) {
                 case 3:
-                  GetConsoleScreenBufferInfo(stdo, &csbi);
+                  GetConsoleScreenBufferInfo(handle, &csbi);
                   w = csbi.dwSize.X;
                   h = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
                   csize = w * (h + 1);
                   coord.X = 0;
                   coord.Y = csbi.srWindow.Top;
-                  FillConsoleOutputCharacter(stdo, ' ', csize, coord, &written);
-                  FillConsoleOutputAttribute(stdo, csbi.wAttributes, csize, coord, &written);
-                  SetConsoleCursorPosition(stdo, csbi.dwCursorPosition);
+                  FillConsoleOutputCharacter(handle, ' ', csize, coord, &written);
+                  FillConsoleOutputAttribute(handle, csbi.wAttributes, csize, coord, &written);
+                  SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
                   csbi.dwSize.X = 132;
-                  SetConsoleScreenBufferSize(stdo, csbi.dwSize);
+                  SetConsoleScreenBufferSize(handle, csbi.dwSize);
                   csbi.srWindow.Right = csbi.srWindow.Left + 131;
-                  SetConsoleWindowInfo(stdo, TRUE, &csbi.srWindow);
+                  SetConsoleWindowInfo(handle, TRUE, &csbi.srWindow);
                   break;
                 case 5:
                   attr =
                     ((attr & FOREGROUND_MASK) << 4) |
                     ((attr & BACKGROUND_MASK) >> 4);
-                  SetConsoleTextAttribute(stdo, attr);
+                  SetConsoleTextAttribute(handle, attr);
                   break;
                 case 9:
                   break;
                 case 25:
-                  GetConsoleCursorInfo(stdo, &cci);
+                  GetConsoleCursorInfo(handle, &cci);
                   cci.bVisible = TRUE;
-                  SetConsoleCursorInfo(stdo, &cci);
+                  SetConsoleCursorInfo(handle, &cci);
                   break;
                 case 47:
                   coord.X = 0;
                   coord.Y = 0;
-                  SetConsoleCursorPosition(stdo, coord);
+                  SetConsoleCursorPosition(handle, coord);
                   break;
                 default:
                   break;
               }
             }
           } else if (m == '>' && v[0] == 5) {
-            GetConsoleCursorInfo(stdo, &cci);
+            GetConsoleCursorInfo(handle, &cci);
             cci.bVisible = FALSE;
-            SetConsoleCursorInfo(stdo, &cci);
+            SetConsoleCursorInfo(handle, &cci);
           }
           break;
         case 'l':
@@ -105,30 +117,30 @@ retry:
             for (i = 0; i <= n; i++) {
               switch (v[i]) {
                 case 3:
-                  GetConsoleScreenBufferInfo(stdo, &csbi);
+                  GetConsoleScreenBufferInfo(handle, &csbi);
                   w = csbi.dwSize.X;
                   h = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
                   csize = w * (h + 1);
                   coord.X = 0;
                   coord.Y = csbi.srWindow.Top;
-                  FillConsoleOutputCharacter(stdo, ' ', csize, coord, &written);
-                  FillConsoleOutputAttribute(stdo, csbi.wAttributes, csize, coord, &written);
-                  SetConsoleCursorPosition(stdo, csbi.dwCursorPosition);
+                  FillConsoleOutputCharacter(handle, ' ', csize, coord, &written);
+                  FillConsoleOutputAttribute(handle, csbi.wAttributes, csize, coord, &written);
+                  SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
                   csbi.srWindow.Right = csbi.srWindow.Left + 79;
-                  SetConsoleWindowInfo(stdo, TRUE, &csbi.srWindow);
+                  SetConsoleWindowInfo(handle, TRUE, &csbi.srWindow);
                   csbi.dwSize.X = 80;
-                  SetConsoleScreenBufferSize(stdo, csbi.dwSize);
+                  SetConsoleScreenBufferSize(handle, csbi.dwSize);
                   break;
                 case 5:
                   attr =
                     ((attr & FOREGROUND_MASK) << 4) |
                     ((attr & BACKGROUND_MASK) >> 4);
-                  SetConsoleTextAttribute(stdo, attr);
+                  SetConsoleTextAttribute(handle, attr);
                   break;
                 case 25:
-                  GetConsoleCursorInfo(stdo, &cci);
+                  GetConsoleCursorInfo(handle, &cci);
                   cci.bVisible = FALSE;
-                  SetConsoleCursorInfo(stdo, &cci);
+                  SetConsoleCursorInfo(handle, &cci);
                   break;
                 default:
                   break;
@@ -136,16 +148,16 @@ retry:
             }
           }
           else if (m == '>' && v[0] == 5) {
-            GetConsoleCursorInfo(stdo, &cci);
+            GetConsoleCursorInfo(handle, &cci);
             cci.bVisible = TRUE;
-            SetConsoleCursorInfo(stdo, &cci);
+            SetConsoleCursorInfo(handle, &cci);
           }
           break;
         case 'm':
           attr = attr_old;
           for (i = 0; i <= n; i++) {
             if (v[i] == -1 || v[i] == 0)
-              attr = attr_old;
+              attr = attr_olds[type];
             else if (v[i] == 1)
               attr |= FOREGROUND_INTENSITY;
             else if (v[i] == 4)
@@ -171,8 +183,7 @@ retry:
                 ((attr & FOREGROUND_MASK) << 4) |
                 ((attr & BACKGROUND_MASK) >> 4);
             else if (v[i] >= 30 && v[i] <= 37) {
-              attr = (attr & BACKGROUND_MASK)
-                | FOREGROUND_INTENSITY;
+              attr = (attr & BACKGROUND_MASK);
               if ((v[i] - 30) & 1)
                 attr |= FOREGROUND_RED;
               if ((v[i] - 30) & 2)
@@ -183,8 +194,7 @@ retry:
             //else if (v[i] == 39)
             //attr = (~attr & BACKGROUND_MASK);
             else if (v[i] >= 40 && v[i] <= 47) {
-              attr = (attr & FOREGROUND_MASK)
-                | BACKGROUND_INTENSITY;
+              attr = (attr & FOREGROUND_MASK);
               if ((v[i] - 40) & 1)
                 attr |= BACKGROUND_RED;
               if ((v[i] - 40) & 2)
@@ -197,10 +207,10 @@ retry:
             else if (v[i] == 100)
               attr = attr_old;
           }
-          SetConsoleTextAttribute(stdo, attr);
+          SetConsoleTextAttribute(handle, attr);
           break;
         case 'K':
-          GetConsoleScreenBufferInfo(stdo, &csbi);
+          GetConsoleScreenBufferInfo(handle, &csbi);
           coord = csbi.dwCursorPosition;
           switch (v[0]) {
             default:
@@ -216,12 +226,12 @@ retry:
               coord.X = 0;
               break;
           }
-          FillConsoleOutputCharacter(stdo, ' ', csize, coord, &written);
-          FillConsoleOutputAttribute(stdo, csbi.wAttributes, csize, coord, &written);
-          SetConsoleCursorPosition(stdo, csbi.dwCursorPosition);
+          FillConsoleOutputCharacter(handle, ' ', csize, coord, &written);
+          FillConsoleOutputAttribute(handle, csbi.wAttributes, csize, coord, &written);
+          SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
           break;
         case 'J':
-          GetConsoleScreenBufferInfo(stdo, &csbi);
+          GetConsoleScreenBufferInfo(handle, &csbi);
           w = csbi.dwSize.X;
           h = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
           coord = csbi.dwCursorPosition;
@@ -242,12 +252,12 @@ retry:
               coord.Y = csbi.srWindow.Top;
               break;
           }
-          FillConsoleOutputCharacter(stdo, ' ', csize, coord, &written);
-          FillConsoleOutputAttribute(stdo, csbi.wAttributes, csize, coord, &written);
-          SetConsoleCursorPosition(stdo, csbi.dwCursorPosition);
+          FillConsoleOutputCharacter(handle, ' ', csize, coord, &written);
+          FillConsoleOutputAttribute(handle, csbi.wAttributes, csize, coord, &written);
+          SetConsoleCursorPosition(handle, csbi.dwCursorPosition);
           break;
         case 'H':
-          GetConsoleScreenBufferInfo(stdo, &csbi);
+          GetConsoleScreenBufferInfo(handle, &csbi);
           coord = csbi.dwCursorPosition;
           if (v[0] != -1) {
             if (v[1] != -1) {
@@ -267,7 +277,7 @@ retry:
             coord.Y = csbi.srWindow.Top;
           else if (coord.Y > csbi.srWindow.Bottom)
             coord.Y = csbi.srWindow.Bottom;
-          SetConsoleCursorPosition(stdo, coord);
+          SetConsoleCursorPosition(handle, coord);
           break;
         default:
           break;
@@ -277,7 +287,6 @@ retry:
       ptr++;
     }
   }
-  SetConsoleTextAttribute(stdo, attr_old);
   return ptr - buf;
 }
 
