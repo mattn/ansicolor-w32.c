@@ -1,6 +1,8 @@
 #ifdef _WIN32
 #include <windows.h>
+#include <stdarg.h>
 #include <stdio.h>
+#include <errno.h>
 
 #ifndef FOREGROUND_MASK
 # define FOREGROUND_MASK (FOREGROUND_RED|FOREGROUND_BLUE|FOREGROUND_GREEN|FOREGROUND_INTENSITY)
@@ -295,32 +297,13 @@ _puts_w32(const char* s) {
 }
 
 int
-__vasprintf(char **p, const char *fmt, __VALIST argv) {
-  int wanted = vsnprintf(*p = NULL, 0, fmt, argv);
-  if ((wanted < 0) || ((*p = malloc(1 + wanted)) == NULL)) return -1;
-  return vsprintf(*p, fmt, argv);
-}
-
-int
-__asprintf(char **p, const char *fmt, ...) {
-  va_list argv;
-  int r;
-  va_start(argv, fmt);
-  r = __vasprintf(p, fmt, argv);
-  va_end(argv);
-  return r;
-}
-
-int
 _fprintf_w32(FILE* fp, const char* format, ...) {
   va_list args;
   int r;
   char *buf = NULL;
-
   va_start(args, format);
-  r = __asprintf(&buf, format, args);
+  r = vasprintf(&buf, format, args);
   va_end(args);
-
   if (r != -1)
     r = __write_w32(fp, buf);
   return r;
