@@ -293,10 +293,6 @@ retry:
 }
 
 int
-_puts_w32(const char* s) {
-}
-
-int
 _fprintf_w32(FILE* fp, const char* format, ...) {
   va_list args;
   int r;
