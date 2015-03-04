@@ -57,7 +57,7 @@ retry:
       if (c == '[') {
         goto retry;
       }
-      if (c == ',') {
+      if (c == ';') {
         if (++n == 6) break;
         goto retry;
       }
