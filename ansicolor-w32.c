@@ -302,6 +302,7 @@ _fprintf_w32(FILE* fp, const char* format, ...) {
   va_end(args);
   if (r != -1)
     r = __write_w32(fp, buf);
+  if (buf) free(buf);
   return r;
 }
 
