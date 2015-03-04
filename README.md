@@ -14,7 +14,7 @@ You can display ANSI color on windows without hacks
 
 int
 main(int argc, char* argv[]) {
-  printf("\x1b[2J\x1b[1,1H\x1b[40mhello"); 
+  printf("\x1b[2J\x1b[1;1H\x1b[40mhello"); 
   return 0;
 }
 ```
