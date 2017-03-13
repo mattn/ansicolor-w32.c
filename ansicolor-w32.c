@@ -213,6 +213,15 @@ retry:
               if ((v[i] - 90) & 4)
                 attr |= FOREGROUND_BLUE;
             }
+            else if (v[i] >= 100 && v[i] <= 107) {
+              attr = (attr & FOREGROUND_MASK) | BACKGROUND_INTENSITY;
+              if ((v[i] - 100) & 1)
+                attr |= BACKGROUND_RED;
+              if ((v[i] - 100) & 2)
+                attr |= BACKGROUND_GREEN;
+              if ((v[i] - 100) & 4)
+                attr |= BACKGROUND_BLUE;
+            }
             //else if (v[i] == 49)
             //attr = (~attr & FOREGROUND_MASK);
             else if (v[i] == 100)
