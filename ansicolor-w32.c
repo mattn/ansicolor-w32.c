@@ -299,6 +299,34 @@ retry:
             coord.Y = csbi.srWindow.Bottom;
           SetConsoleCursorPosition(handle, coord);
           break;
+        case 'A': // Move up
+          GetConsoleScreenBufferInfo(handle, &csbi);
+          coord = csbi.dwCursorPosition;
+          if (v[0] != -1) coord.Y = coord.Y - v[0];
+          if (coord.Y < csbi.srWindow.Top) coord.Y = csbi.srWindow.Top;
+          SetConsoleCursorPosition(handle, coord);
+          break;
+        case 'B': // Move down
+          GetConsoleScreenBufferInfo(handle, &csbi);
+          coord = csbi.dwCursorPosition;
+          if (v[0] != -1) coord.Y = coord.Y + v[0];
+          if (coord.Y > csbi.srWindow.Bottom) coord.Y = csbi.srWindow.Bottom;
+          SetConsoleCursorPosition(handle, coord);
+          break;
+        case 'C': // Move forward / right
+          GetConsoleScreenBufferInfo(handle, &csbi);
+          coord = csbi.dwCursorPosition;
+          if (v[0] != -1) coord.X = coord.X + v[0];
+          if (coord.X > csbi.srWindow.Right) coord.X = csbi.srWindow.Right;
+          SetConsoleCursorPosition(handle, coord);
+          break;
+        case 'D': // Move backward / left
+          GetConsoleScreenBufferInfo(handle, &csbi);
+          coord = csbi.dwCursorPosition;
+          if (v[0] != -1) coord.X = coord.X - v[0];
+          if (coord.X < csbi.srWindow.Left) coord.X = csbi.srWindow.Left;
+          SetConsoleCursorPosition(handle, coord);
+          break;
         default:
           break;
       }
